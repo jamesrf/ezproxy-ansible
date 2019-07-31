@@ -1,0 +1,97 @@
+---
+- hosts: localhost
+  user: root
+  tasks:
+
+  - name: Install logrotate
+    package:
+      name: logrotate
+      state: present
+
+  - name: Logrotate Config
+    template:
+      src: logrotate.j2
+      dest: /etc/logrotate.d/ezproxy
+      mode: 0664
+
+  - name: Install glibc.i686
+    package:
+      name: glibc.i686
+      state: present
+
+  - name: Create EZProxy Directory
+    file:
+      path: /usr/local/ezproxy
+      state: directory
+      mode: 0755
+
+  - name: Download and install EZProxy
+    get_url:
+      url: "https://www.oclc.org/content/dam/support/ezproxy/documentation/download/binaries/6-2-2/ezproxy-linux.bin"
+      dest: "/usr/local/ezproxy/ezproxy"
+      checksum: sha256:d4fcf99fed37ed32a5de57d39a11d755c230b4aead6dd4a831656190ea2ce540
+      mode: 0755
+
+  - name: Create EZProxy Service
+    template:
+      src: ezproxy.service.j2
+      dest: /etc/systemd/system/ezproxy.service
+      mode: 0664
+    notify: install ezproxy service
+
+  - name: Include secrets
+    include_vars: 
+      file: user_vault.yml
+
+  - name: config.txt
+    template:
+      src: config.j2
+      dest: /usr/local/ezproxy/config.txt
+    notify: restart ezproxy
+
+  - name: user.txt
+    template:
+      src: user.j2
+      dest: /usr/local/ezproxy/user.txt
+    notify: restart ezproxy
+
+  - name: Docs directory
+    copy:
+      src: templates/docs/
+      dest: /usr/local/ezproxy/docs
+    notify: restart ezproxy
+
+  # - name: Databases directory
+  #   copy:
+  #     src: templates/databases/
+  #     dest: /usr/local/ezproxy/databases
+  #   notify: restart ezproxy
+
+  - name: Check that the wskey file exists
+    stat:
+      path: /usr/local/ezproxy/ezproxy.key
+    register: wskey
+
+  - name: Create the wskey if it doesnt exist already
+    command: "/usr/local/ezproxy/ezproxy -k {{ wskey }}"
+    when: wskey.stat.exists == False 
+    notify: restart ezproxy
+
+  - name: Start EZProxy
+    service:
+      name: ezproxy
+      state: started
+
+  - name: Notify Slack
+    slack:
+      token: "{{ slacktoken }}"
+      icon_emoji: ":robot_face:"
+      msg: "EZproxy has been updated!"
+      channel: "#systems"
+
+  handlers:
+  - name: restart ezproxy
+    service: name=ezproxy state=restarted
+  - name: install ezproxy service
+    systemd: state=started name=ezproxy daemon_reload=yes
+

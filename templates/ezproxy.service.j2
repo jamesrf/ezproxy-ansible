@@ -1,0 +1,13 @@
+[Unit]
+Description=EZProxy Service
+After=network.target
+
+[Service]
+ExecStart=/usr/local/ezproxy/ezproxy
+ExecReload=/bin/kill -HUP ${MAINPID}
+WorkindDirectory=/usr/local/ezproxy
+KillMode=process
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

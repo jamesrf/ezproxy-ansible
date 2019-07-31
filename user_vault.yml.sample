@@ -1,0 +1,18 @@
+user_groups:
+- name: "Group1"
+  users:
+    someuser: somepass
+    someuser: somepass
+- name "Group2"
+  users:
+    someuser: somepass
+    someuser: somepass
+admin_users:
+  someuser: somepass
+  someuser: somepass
+ldap:
+  bind_user: 'some_ldap'
+  bind_password: 'some_ldap_password'
+  url: 'some_ldap_server'
+  deny_groups: 'some_ldap_groups'
+wskey: abc

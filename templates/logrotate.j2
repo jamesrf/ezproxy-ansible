@@ -1,0 +1,17 @@
+/usr/local/ezproxy/log/*.log {
+   monthly
+   rotate 60
+   compress
+   delaycompress
+   dateext
+   dateformat ".%Y%m"
+   missingok
+}
+
+/usr/local/ezproxy/messages.txt {
+   daily
+   rotate 7
+   compress
+   delaycompress
+   missingok
+}

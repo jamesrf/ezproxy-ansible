@@ -1,0 +1,28 @@
+# For more information on this file and the options for user
+# authentication, see:
+#      https://www.oclc.org/support/services/ezproxy/documentation/usr.en.html
+#
+
+
+## admin user
+{% for user in admin_users %}
+{{ user }}:{{ admin_users[user] }}:admin
+{% endfor %}
+
+{% for grp in user_groups %}
+::group={{ grp['name'] }}
+{% for user in grp['users'] %}
+{{ user }}:{{ grp['users'][user] }}
+{% endfor %}
+{% endfor %}
+
+::LDAP
+BindUser {{ldap['bind_user']}}
+BindPassword -Obscure {{ldap['bind_password']}}
+DisableReferralChasing
+URL {{ldap['url']}}
+IfUnauthenticated; Stop
+IfMember {{ldap['deny_groups']}}; Deny logup.htm
+/LDAP
+
+
